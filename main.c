@@ -9,49 +9,7 @@ typedef struct TreeNode {
   int height;
 }TreeNode;
 
-TreeNode* deleteNode(TreeNode* root, int key) {
-    if(root) {
-        if(key < root -> key)
-            root->left= deleteNode(root->left, key);
-        else if(key > root-> key)
-            root->right = deleteNode(root->right, key);
-        else {
-            if(!root->left && !root->right)
-                return NULL;
 
-            if (!root->left || !root->right)
-                return root->left ? root->left : root->right;
-            TreeNode* temp = root->left;
-            while(temp->right != NULL) 
-                temp = temp->right;     
-            root->key = temp->key;                            
-            root->left = deleteNode(root->left, temp->key); 
-        }
-
-    }
-    return root;
-}
-
-TreeNode* delete_min(TreeNode* root) {
-  if(!root)
-    return NULL;
-  if (root->left == NULL) {
-    TreeNode* temp = root->right;
-    free(root);
-    return temp;
-  }
-
-  root->left = delete_min(root->left);
-  return root;
-}
-
-void deleteTree(TreeNode* root) {
-    if (root != NULL) {
-        deleteTree(root->left);
-        deleteTree(root->right);
-        free(root);
-    }
-}
 
 
 int max(int a, int b)
@@ -117,14 +75,14 @@ struct TreeNode *rightRotate(struct TreeNode *root) {
   return rootLeftChild;
 }
 
-TreeNode* insert(TreeNode* node, int key) {
+TreeNode* balancedInsert(TreeNode* node, int key) {
   if (node == NULL)
     return createNode(key);
 
   if (key < node->key)
-    node->left = insert(node->left, key);
+    node->left = balancedInsert(node->left, key);
   else if (key > node->key)
-    node->right = insert(node->right, key);
+    node->right = balancedInsert(node->right, key);
 
   node->height = 1 + max(getHeight(node->left), getHeight(node->right));
   int bf = getBalanceFactor(node);
@@ -149,18 +107,136 @@ TreeNode* insert(TreeNode* node, int key) {
   return node;
 }
 
-TreeNode *insertNodeIntoTree(TreeNode *root, int key) {
+TreeNode *unbalancedInsert(TreeNode *root, int key) {
   if (root == NULL)
     return createNode(key);
 
   if (key > root->key) {
-    root->right = insertNodeIntoTree(root->right, key);
+    root->right = unbalancedInsert(root->right, key);
   } else if (key < root->key) {
-    root->left = insertNodeIntoTree(root->left, key);
+    root->left = unbalancedInsert(root->left, key);
   }
 
 
   return root;
+}
+
+TreeNode* balancedDeleteNode(TreeNode* root, int key) {
+    if (root == NULL)
+        return root;
+
+    if (key < root->key)
+        root->left = balancedDeleteNode(root->left, key);
+    else if (key > root->key)
+        root->right = balancedDeleteNode(root->right, key);
+    else {
+        // Node with only one child or no child
+        if (root->left == NULL || root->right == NULL) {
+            TreeNode* temp = root->left ? root->left : root->right;
+
+            // No child case
+            if (temp == NULL) {
+                temp = root;
+                root = NULL;
+            } else // One child case
+                *root = *temp; // Copy the contents of the non-empty child
+
+            free(temp);
+        } else {
+            // Node with two children, get the inorder successor
+            TreeNode* temp = root->right;
+            while (temp->left != NULL)
+                temp = temp->left;
+
+            // Copy the inorder successor's data to this node
+            root->key = temp->key;
+
+            // Delete the inorder successor
+            root->right = balancedDeleteNode(root->right, temp->key);
+        }
+    }
+
+    // If the tree had only one node, then return
+    if (root == NULL)
+        return root;
+
+    // Update height of the current node
+    root->height = 1 + max(getHeight(root->left), getHeight(root->right));
+
+    // Get the balance factor
+    int balance = getBalanceFactor(root);
+
+    // Perform rotations if needed to balance the tree
+    // LL
+    if (balance > 1 && getBalanceFactor(root->left) >= 0)
+        return rightRotate(root);
+
+    // LR
+    if (balance > 1 && getBalanceFactor(root->left) < 0) {
+        root->left = leftRotate(root->left);
+        return rightRotate(root);
+    }
+
+    // RR
+    if (balance < -1 && getBalanceFactor(root->right) <= 0)
+        return leftRotate(root);
+
+    // RL
+    if (balance < -1 && getBalanceFactor(root->right) > 0) {
+        root->right = rightRotate(root->right);
+        return leftRotate(root);
+    }
+
+    return root;
+}
+
+TreeNode* unbalancedDeleteMin(TreeNode* root) {
+  if(!root)
+    return NULL;
+  if (root->left == NULL) {
+    TreeNode* temp = root->right;
+    free(root);
+    return temp;
+  }
+
+  root->left = unbalancedDeleteMin(root->left);
+  return root;
+}
+TreeNode* balancedDeleteMin(TreeNode* root) {
+    if (root == NULL)
+        return NULL;
+
+    if (root->left == NULL) {
+        TreeNode* temp = root->right;
+        free(root);
+        return temp;
+    }
+
+    root->left = balancedDeleteMin(root->left);
+
+    // Update height and balance factor
+    root->height = 1 + max(getHeight(root->left), getHeight(root->right));
+    int bf = getBalanceFactor(root);
+
+    // Perform balancing rotations
+    // RR
+    if (bf < -1 && getBalanceFactor(root->right) <= 0)
+        return leftRotate(root);
+
+    // RL
+    if (bf < -1 && getBalanceFactor(root->right) > 0) {
+        root->right = rightRotate(root->right);
+        return leftRotate(root);
+    }
+
+    return root;
+}
+void deleteTree(TreeNode* root) {
+    if (root != NULL) {
+        deleteTree(root->left);
+        deleteTree(root->right);
+        free(root);
+    }
 }
 
 int main(void) {
@@ -235,20 +311,37 @@ int main(void) {
 
 
 
-  printf("CPU Time for Balanced Tree Insertions: \n");
+  printf("CPU Time for Average Case Balanced Tree Insertions: \n");
   TreeNode* root = NULL;
 
 
   clock_t begin = clock();
   for(int i = 0; i < 10; i++)
     {
-      root = insert(root, arr10[i]);
+      root = balancedInsert(root, arr10[i]);
 
     }
   clock_t end = clock();
+
+ 
+
+
   double time_spent10 = (double)(end - begin) / CLOCKS_PER_SEC; // clock end for 10 inserts
   printf("%lf \n", time_spent10);
 
+  begin = clock();
+    int delVal10 = rand() % 10;
+    root = balancedDeleteNode(root, delVal10);
+    end = clock();
+    time_spent10 = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("Time for delete operation: %.6lf seconds\n", time_spent10);
+
+    // Print time for delete_min operation
+    begin = clock();
+    root = balancedDeleteMin(root);
+    end = clock();
+    time_spent10 = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("Time for delete_min operation: %.6lf seconds\n", time_spent10);
 
 
   TreeNode* root2 = NULL;
@@ -258,7 +351,7 @@ int main(void) {
   for(int i = 0; i < 100; i++)
     {
 
-      root2 = insert(root2, arr100[i]);
+      root2 = balancedInsert(root2, arr100[i]);
 
     }
   clock_t end2 = clock();
@@ -275,7 +368,7 @@ int main(void) {
   for(int i = 0; i < 1000; i++)
     {
 
-      root3 = insert(root3, arr1000[i]);
+      root3 = balancedInsert(root3, arr1000[i]);
 
     }
   clock_t end3 = clock();
@@ -290,7 +383,7 @@ int main(void) {
   for(int i = 0; i < 100000; i++)
     {
 
-      root4 = insert(root4, arr100000[i]);
+      root4 = balancedInsert(root4, arr100000[i]);
 
     }
   clock_t end4 = clock();
@@ -304,8 +397,7 @@ int main(void) {
   clock_t begin5 = clock();
   for(int i = 0; i < 1000000; i++)
     {
-      int value = rand();
-      root5 = insert(root5, arr1000000[i]);
+      root5 = balancedInsert(root5, arr1000000[i]);
 
     }
   clock_t end5 = clock();
@@ -313,13 +405,13 @@ int main(void) {
   printf("%lf \n", time_spent1000000);
 
 
-printf("\nCPU Time for Unbalanced Tree Insertions: \n");
+printf("\nCPU Time for Average Case Unbalanced Tree Insertions: \n");
   TreeNode *uroot = NULL;
   clock_t ubegin10 = clock();
   for (int i = 0; i < 10; i++) // unbalanced 10 insertions
   {
    
-    uroot = insertNodeIntoTree(uroot, arr10[i]);
+    uroot = unbalancedInsert(uroot, arr10[i]);
   }
   clock_t uend10 = clock();
   double utime_spent10 = (double)(uend10 - ubegin10) / CLOCKS_PER_SEC;
@@ -331,7 +423,7 @@ printf("\nCPU Time for Unbalanced Tree Insertions: \n");
   for (int i = 0; i < 100; i++) // unbalanced 100 insertions
   {
   
-    uroot2 = insertNodeIntoTree(uroot2, arr100[i]);
+    uroot2 = unbalancedInsert(uroot2, arr100[i]);
   }
   clock_t uend100 = clock();
   double utime_spent100 = (double)(uend100 - ubegin100) / CLOCKS_PER_SEC;
@@ -342,7 +434,7 @@ printf("\nCPU Time for Unbalanced Tree Insertions: \n");
   clock_t ubegin1000 = clock();
   for (int i = 0; i < 1000; i++) // unbalanced 1,000 insertions
   {
-    uroot3 = insertNodeIntoTree(uroot3, arr1000[i]);
+    uroot3 = unbalancedInsert(uroot3, arr1000[i]);
   }
   clock_t uend1000 = clock();
   double utime_spent1000 = (double)(uend1000 - ubegin1000) / CLOCKS_PER_SEC;
@@ -353,7 +445,7 @@ printf("\nCPU Time for Unbalanced Tree Insertions: \n");
   clock_t ubegin100000 = clock();
   for (int i = 0; i < 100000; i++) // unbalanced 10,00000 insertions
   {
-    uroot4 = insertNodeIntoTree(uroot4, arr100000[i]);
+    uroot4 = unbalancedInsert(uroot4, arr100000[i]);
   }
   clock_t uend100000 = clock();
   double utime_spent100000 = (double)(uend100000 - ubegin100000) / CLOCKS_PER_SEC;
@@ -364,7 +456,7 @@ printf("\nCPU Time for Unbalanced Tree Insertions: \n");
   clock_t ubegin1000000 = clock();
   for (int i = 0; i < 1000000; i++) // unbalanced 10000000 insertions
   {
-    uroot5 = insertNodeIntoTree(uroot5,arr1000000[i]);
+    uroot5 = unbalancedInsert(uroot5,arr1000000[i]);
   }
   clock_t uend1000000 = clock();
   double utime_spent1000000 = (double)(uend1000000 - ubegin1000000) / CLOCKS_PER_SEC;
