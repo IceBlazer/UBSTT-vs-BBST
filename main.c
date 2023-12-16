@@ -107,19 +107,50 @@ TreeNode* balancedInsert(TreeNode* node, int key) {
   return node;
 }
 
-TreeNode *unbalancedInsert(TreeNode *root, int key) {
-  if (root == NULL)
-    return createNode(key);
+// TreeNode *unbalancedInsert(TreeNode *root, int key) {
+//   if (root == NULL)
+//     return createNode(key);
 
-  if (key > root->key) {
-    root->right = unbalancedInsert(root->right, key);
-  } else if (key < root->key) {
-    root->left = unbalancedInsert(root->left, key);
-  }
+//   if (key > root->key) {
+//     root->right = unbalancedInsert(root->right, key);
+//   } else if (key < root->key) {
+//     root->left = unbalancedInsert(root->left, key);
+//   }
 
 
-  return root;
+//   return root;
+// }
+TreeNode* unbalancedInsert(TreeNode* root, int key) {
+    TreeNode* newNode = createNode(key);
+    if (root == NULL) {
+        return newNode;
+    }
+
+    TreeNode* current = root;
+    TreeNode* parent = NULL;
+
+    while (current != NULL) {
+        parent = current;
+        if (key < current->key) {
+            current = current->left;
+        } else if (key > current->key) {
+            current = current->right;
+        } else {
+            // Duplicate key, handle as needed
+            free(newNode);
+            return root;
+        }
+    }
+
+    if (key < parent->key) {
+        parent->left = newNode;
+    } else {
+        parent->right = newNode;
+    }
+
+    return root;
 }
+
 
 TreeNode* balancedDeleteNode(TreeNode* root, int key) {
     if (root == NULL)
@@ -189,6 +220,42 @@ TreeNode* balancedDeleteNode(TreeNode* root, int key) {
 
     return root;
 }
+TreeNode* unbalancedDeleteNode(TreeNode* root, int key) {
+    if (root == NULL)
+        return root;
+
+    // Recursive deletion
+    if (key < root->key)
+        root->left = unbalancedDeleteNode(root->left, key);
+    else if (key > root->key)
+        root->right = unbalancedDeleteNode(root->right, key);
+    else {
+        // Node with only one child or no child
+        if (root->left == NULL) {
+            TreeNode* temp = root->right;
+            free(root);
+            return temp;
+        } else if (root->right == NULL) {
+            TreeNode* temp = root->left;
+            free(root);
+            return temp;
+        }
+
+        // Node with two children
+        // Find the inorder successor (smallest node in the right subtree)
+        TreeNode* successor = root->right;
+        while (successor->left != NULL)
+            successor = successor->left;
+
+        // Copy the inorder successor's key to this node
+        root->key = successor->key;
+
+        // Delete the inorder successor
+        root->right = unbalancedDeleteNode(root->right, successor->key);
+    }
+
+    return root;
+}
 
 TreeNode* unbalancedDeleteMin(TreeNode* root) {
   if(!root)
@@ -232,11 +299,77 @@ TreeNode* balancedDeleteMin(TreeNode* root) {
     return root;
 }
 void deleteTree(TreeNode* root) {
+    if(root == NULL)
+      return;
     if (root != NULL) {
         deleteTree(root->left);
         deleteTree(root->right);
         free(root);
     }
+}
+
+void balancedAnalysis(int size, int* arr)
+{
+  TreeNode* uroot = NULL;
+  clock_t begin = clock();
+  for(int i = 0; i < size; i++)
+  {
+    uroot = balancedInsert(uroot, arr[i] );
+  }
+  clock_t end = clock();
+  double time_spent = (double)(end-begin) / CLOCKS_PER_SEC;
+  printf("\n");
+  printf("Time for insertion operation: %.6lf \n", time_spent);
+
+  //Print time for delete operation
+    begin = clock();
+    int delVal = rand() % size;
+    uroot = balancedDeleteNode(uroot, arr[delVal]);
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("Time for delete operation: %.6lf seconds\n", time_spent);
+
+    // Print time for delete_min operation
+    begin = clock();
+    uroot = balancedDeleteMin(uroot);
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("Time for delete_min operation: %.6lf seconds\n", time_spent);
+
+    deleteTree(uroot);
+
+}
+
+void unBalancedAnalysis(int size, int* arr)
+{
+  TreeNode* uroot = NULL;
+  clock_t begin = clock();
+  for(int i = 0; i < size; i++)
+  {
+    uroot = unbalancedInsert(uroot, arr[i] );
+  }
+  clock_t end = clock();
+  double time_spent = (double)(end-begin) / CLOCKS_PER_SEC;
+  printf("\n");
+  printf("Time for insertion operation: %.6lf \n", time_spent);
+
+  //Print time for delete operation
+    begin = clock();
+    int delVal = rand() % size;
+    uroot = unbalancedDeleteNode(uroot, arr[delVal]);
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("Time for delete operation: %.6lf seconds\n", time_spent);
+
+    // Print time for delete_min operation
+    begin = clock();
+    uroot = unbalancedDeleteMin(uroot);
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("Time for delete_min operation: %.6lf seconds\n", time_spent);
+
+    deleteTree(uroot);
+
 }
 
 int main(void) {
@@ -309,9 +442,23 @@ int main(void) {
     worstarr1000[i] = i;
   }
 
+  size = 100000;
+  int worstarr100000[size];
+  for(int i = 0; i < 1000000; i++)
+  {
+    worstarr100000[i] = i;
+  }
 
+  // size = 1000000;
+  // int worstarr1000000[size];
+  // for (int i = 0; i < size; i++)
+  // {
+  //   worstarr1000000[i] = i;
+  // }
 
-  printf("CPU Time for Average Case Balanced Tree Insertions: \n");
+  double time_spent;
+
+  printf("CPU Times for Average Case Balanced Trees: \n");
   TreeNode* root = NULL;
 
 
@@ -327,11 +474,13 @@ int main(void) {
 
 
   double time_spent10 = (double)(end - begin) / CLOCKS_PER_SEC; // clock end for 10 inserts
-  printf("%lf \n", time_spent10);
+  printf("-----------10 Nodes--------------\n");
+  printf("Time for insertion operation: %.6lf \n", time_spent10);
 
-  begin = clock();
+  //Print time for delete operation
+    begin = clock();
     int delVal10 = rand() % 10;
-    root = balancedDeleteNode(root, delVal10);
+    root = balancedDeleteNode(root, arr10[delVal10]);
     end = clock();
     time_spent10 = (double)(end - begin) / CLOCKS_PER_SEC;
     printf("Time for delete operation: %.6lf seconds\n", time_spent10);
@@ -355,8 +504,26 @@ int main(void) {
 
     }
   clock_t end2 = clock();
-  double time_spent100 = (double)(end2 - begin2) / CLOCKS_PER_SEC; // clock end for 100 inserts
-  printf("%lf \n", time_spent100);
+
+  printf("-----------100 Nodes--------------\n");
+    double time_spent100 = (double)(end2 - begin2) / CLOCKS_PER_SEC; // clock end for 100 inserts
+  printf("Time for insertion operation: %.6lf \n", time_spent100);
+
+  //Print time for delete operation
+    begin = clock();
+    int delVal = rand() % 100;
+    root2 = balancedDeleteNode(root2, arr10[delVal]);
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("Time for delete operation: %.6lf seconds\n", time_spent);
+
+    // Print time for delete_min operation
+    begin = clock();
+    root2 = balancedDeleteMin(root2);
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("Time for delete_min operation: %.6lf seconds\n", time_spent);
+
 
 
 
@@ -372,8 +539,25 @@ int main(void) {
 
     }
   clock_t end3 = clock();
-  double time_spent1000 = (double)(end3 - begin3) / CLOCKS_PER_SEC; // clock end for 1000 inserts
-  printf("%lf \n", time_spent1000);
+  
+   printf("-----------1,000 Nodes--------------\n");
+ double time_spent1000 = (double)(end3 - begin3) / CLOCKS_PER_SEC; // clock end for 1000 inserts
+  printf("Time for insertion operation: %.6lf \n", time_spent1000);
+
+  //Print time for delete operation
+    begin = clock();
+    delVal = rand() % 1000;
+    root3 = balancedDeleteNode(root3, arr10[delVal]);
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("Time for delete operation: %.6lf seconds\n", time_spent);
+
+    // Print time for delete_min operation
+    begin = clock();
+    root3 = balancedDeleteMin(root3);
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("Time for delete_min operation: %.6lf seconds\n", time_spent);
 
 
   TreeNode* root4 = NULL;
@@ -387,81 +571,70 @@ int main(void) {
 
     }
   clock_t end4 = clock();
-  double time_spent100000 = (double)(end4 - begin4) / CLOCKS_PER_SEC; // clock end for 100000 inserts
-  printf("%lf \n", time_spent100000);
-
-
-  TreeNode* root5 = NULL;
-
-
-  clock_t begin5 = clock();
-  for(int i = 0; i < 1000000; i++)
-    {
-      root5 = balancedInsert(root5, arr1000000[i]);
-
-    }
-  clock_t end5 = clock();
-  double time_spent1000000 = (double)(end5 - begin5) / CLOCKS_PER_SEC; // clock end for 1000000 inserts
-  printf("%lf \n", time_spent1000000);
-
-
-printf("\nCPU Time for Average Case Unbalanced Tree Insertions: \n");
-  TreeNode *uroot = NULL;
-  clock_t ubegin10 = clock();
-  for (int i = 0; i < 10; i++) // unbalanced 10 insertions
-  {
-   
-    uroot = unbalancedInsert(uroot, arr10[i]);
-  }
-  clock_t uend10 = clock();
-  double utime_spent10 = (double)(uend10 - ubegin10) / CLOCKS_PER_SEC;
-  printf("\n");
-  printf("%f ", utime_spent10);
-
-  TreeNode *uroot2 = NULL;
-  clock_t ubegin100 = clock();
-  for (int i = 0; i < 100; i++) // unbalanced 100 insertions
-  {
   
-    uroot2 = unbalancedInsert(uroot2, arr100[i]);
-  }
-  clock_t uend100 = clock();
-  double utime_spent100 = (double)(uend100 - ubegin100) / CLOCKS_PER_SEC;
-  printf("\n");
-  printf("%f ", utime_spent100);
+   printf("-----------100,000 Nodes--------------\n");
+ double time_spent100000 = (double)(end4 - begin4) / CLOCKS_PER_SEC; // clock end for 100000 inserts
+  printf("Time for insertion operation: %.6lf \n", time_spent100000);
 
-  TreeNode *uroot3 = NULL;
-  clock_t ubegin1000 = clock();
-  for (int i = 0; i < 1000; i++) // unbalanced 1,000 insertions
-  {
-    uroot3 = unbalancedInsert(uroot3, arr1000[i]);
-  }
-  clock_t uend1000 = clock();
-  double utime_spent1000 = (double)(uend1000 - ubegin1000) / CLOCKS_PER_SEC;
-  printf("\n");
-  printf("%f ", utime_spent1000);
+  //Print time for delete operation
+    begin = clock();
+    delVal = rand() % 1000;
+    root4 = balancedDeleteNode(root4, arr10[delVal]);
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("Time for delete operation: %.6lf seconds\n", time_spent);
 
-  TreeNode *uroot4 = NULL;
-  clock_t ubegin100000 = clock();
-  for (int i = 0; i < 100000; i++) // unbalanced 10,00000 insertions
-  {
-    uroot4 = unbalancedInsert(uroot4, arr100000[i]);
-  }
-  clock_t uend100000 = clock();
-  double utime_spent100000 = (double)(uend100000 - ubegin100000) / CLOCKS_PER_SEC;
-  printf("\n");
-  printf("%f ", utime_spent100000);
+    // Print time for delete_min operation
+    begin = clock();
+    root4 = balancedDeleteMin(root4);
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("Time for delete_min operation: %.6lf seconds\n", time_spent);
 
-  TreeNode *uroot5 = NULL;
-  clock_t ubegin1000000 = clock();
-  for (int i = 0; i < 1000000; i++) // unbalanced 10000000 insertions
-  {
-    uroot5 = unbalancedInsert(uroot5,arr1000000[i]);
-  }
-  clock_t uend1000000 = clock();
-  double utime_spent1000000 = (double)(uend1000000 - ubegin1000000) / CLOCKS_PER_SEC;
-  printf("\n");
-  printf("%f ", utime_spent1000000);
+
+
+  deleteTree(root);
+  deleteTree(root2);
+  deleteTree(root3);
+  deleteTree(root4);
+
+  printf("-------------------------------\n");
+  printf("\nCPU Time for Average Case Unbalanced Tree Insertions: \n\n");
+  printf("-----------10 Nodes--------------");
+  unBalancedAnalysis(10, arr10);
+
+  printf("-----------100 Nodes--------------");
+  unBalancedAnalysis(100, arr100);
+  printf("-----------1,000 Nodes--------------");
+  unBalancedAnalysis(1000, arr1000);
+  printf("-----------100,000 Nodes--------------");
+  unBalancedAnalysis(100000, arr100000);
+  printf("-------------------------------\n");
+
+
+  printf("\n\n\n");
+  
+  printf("CPU Times for Worst Case Balanced Trees: \n\n");
+  printf("-----------10 Nodes--------------");
+  balancedAnalysis(10, worstarr10);
+  printf("-----------100 Nodes--------------");
+  balancedAnalysis(100, worstarr100);
+  printf("-----------1,000 Nodes--------------");
+  balancedAnalysis(1000, worstarr1000);
+  printf("-----------100,000 Nodes--------------");
+  balancedAnalysis(10000, worstarr100000);
+
+  printf("\nCPU Times for Worst Case Unbalanced Trees: \n\n");
+  printf("-----------10 Nodes--------------");
+  unBalancedAnalysis(10, worstarr10);
+  printf("-----------100 Nodes--------------");
+  unBalancedAnalysis(100, worstarr100);
+  printf("-----------1,000 Nodes--------------");
+  unBalancedAnalysis(1000, worstarr1000);
+  printf("-----------100,000 Nodes--------------");
+  unBalancedAnalysis(10000, worstarr100000);
+
+
 
   return 0;
 }
