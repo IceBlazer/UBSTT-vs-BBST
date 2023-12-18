@@ -401,7 +401,7 @@ void balancedAmortizedAnalysis(int size, int* arr)
     end = clock();
     time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
     amortized_time = 1000000 * time_spent / size;
-    printf("Amortized time for delete_min operation: %.6lf seconds\n", time_spent);
+    printf("Amortized time for delete_min operation: %.6lf seconds\n", amortized_time);
 
     deleteTree(root);
 }
@@ -435,7 +435,7 @@ void unbalancedAmortizedAnalysis(int size, int* arr)
     end = clock();
     time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
     amortized_time = 1000000 * time_spent / size;
-    printf("Amortized time for delete_min operation: %.6lf seconds\n", time_spent);
+    printf("Amortized time for delete_min operation: %.6lf seconds\n", amortized_time);
 
     deleteTree(root);
 }
