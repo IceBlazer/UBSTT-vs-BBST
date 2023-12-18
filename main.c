@@ -372,6 +372,74 @@ void unBalancedAnalysis(int size, int* arr)
 
 }
 
+void balancedAmortizedAnalysis(int size, int* arr)
+{
+  TreeNode* root = NULL;
+  clock_t begin = clock();
+
+  for(int i = 0; i < size; i++)
+  {
+    root = balancedInsert(root, arr[i]);
+  }
+  clock_t end = clock();
+  double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+  double amortized_time = 1000000 * time_spent / size;
+  printf("Amortized time per insertion: %.6lf seconds\n", amortized_time);
+
+  //Print time for delete operation
+    begin = clock();
+    int delVal = rand() % size;
+    root = balancedDeleteNode(root, arr[delVal]);
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    amortized_time = 1000000 * time_spent / size;
+    printf("Amortized time for delete operation: %.6lf seconds\n", amortized_time);
+
+    // Print time for delete_min operation
+    begin = clock();
+    root = balancedDeleteMin(root);
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    amortized_time = 1000000 * time_spent / size;
+    printf("Amortized time for delete_min operation: %.6lf seconds\n", time_spent);
+
+    deleteTree(root);
+}
+
+void unbalancedAmortizedAnalysis(int size, int* arr)
+{
+  TreeNode* root = NULL;
+  clock_t begin = clock();
+
+  for(int i = 0; i < size; i++)
+  {
+    root = unbalancedInsert(root, arr[i]);
+  }
+  clock_t end = clock();
+  double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+  double amortized_time = 1000000 * time_spent / size;
+  printf("Amortized time per insertion: %.6lf seconds\n", amortized_time);
+
+  //Print time for delete operation
+    begin = clock();
+    int delVal = rand() % size;
+    root = unbalancedDeleteNode(root, arr[delVal]);
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    amortized_time = 1000000 * time_spent / size;
+    printf("Amortized time for delete operation: %.6lf seconds\n", amortized_time);
+
+    // Print time for delete_min operation
+    begin = clock();
+    root = unbalancedDeleteMin(root);
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    amortized_time = 1000000 * time_spent / size;
+    printf("Amortized time for delete_min operation: %.6lf seconds\n", time_spent);
+
+    deleteTree(root);
+}
+
 int main(void) {
 
   int size = 10;
@@ -633,6 +701,33 @@ int main(void) {
   unBalancedAnalysis(1000, worstarr1000);
   printf("-----------100,000 Nodes--------------");
   unBalancedAnalysis(10000, worstarr100000);
+  printf("-------------------------------\n");
+
+
+  printf("\n\n\n");
+  
+  printf("Amortized CPU Times for Average Case Balanced Trees: \n\n");
+  printf("-----------10 Nodes--------------\n");
+  balancedAmortizedAnalysis(10, arr10);
+  printf("-----------100 Nodes--------------\n");
+  balancedAmortizedAnalysis(100, arr100);
+  printf("-----------1,000 Nodes--------------\n");
+  balancedAmortizedAnalysis(1000, arr1000);
+  printf("-----------100,000 Nodes--------------\n");
+  balancedAmortizedAnalysis(10000, arr100000);
+  printf("-------------------------------\n\n");
+
+
+  printf("Amortized CPU Times for Average Case Unbalanced Trees: \n\n");
+  printf("-----------10 Nodes--------------\n");
+  unbalancedAmortizedAnalysis(10, arr10);
+  printf("-----------100 Nodes--------------\n");
+  unbalancedAmortizedAnalysis(100, arr100);
+  printf("-----------1,000 Nodes--------------\n");
+  unbalancedAmortizedAnalysis(1000, arr1000);
+  printf("-----------100,000 Nodes--------------\n");
+  unbalancedAmortizedAnalysis(10000, arr100000);
+  printf("-------------------------------\n");
 
 
 
